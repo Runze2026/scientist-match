@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>SciMatch · Find Your Scientist Soulmate</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --blue: #2c3e66; --blue-light: #3f5a8c; --blue-pale: #eef2fa; --ink: #1a1a2e; --ink-muted: #4a4a6a; --surface: #f8f9fc; --white: #ffffff; --border: #dce4f0; --radius: 24px; --shadow-sm: 0 8px 20px rgba(0,0,0,0.03), 0 2px 4px rgba(0,0,0,0.05); }
+        body { font-family: 'Inter', sans-serif; background: var(--surface); color: var(--ink); min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+        header { width: 100%; padding: 20px 24px; text-align: center; border-bottom: 1px solid var(--border); background: var(--white); position: sticky; top: 0; z-index: 10; }
+        .logo { font-family: 'Playfair Display', serif; font-weight: 900; font-size: 28px; letter-spacing: 1px; color: var(--blue); }
+        main { width: 100%; max-width: 600px; padding: 24px 20px 40px; flex: 1; }
+        .screen { display: none; animation: fadeUp 0.4s ease; }
+        .screen.active { display: block; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .progress-container { width: 100%; height: 5px; background: var(--border); border-radius: 10px; margin-bottom: 32px; overflow: hidden; }
+        .progress-bar { height: 100%; background: var(--blue); width: 0%; transition: width 0.35s cubic-bezier(0.2, 0.9, 0.4, 1.1); }
+        .card { background: var(--white); border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow-sm); padding: 28px 24px; }
+        .intro-hero { text-align: center; }
+        .intro-title { font-family: 'Playfair Display', serif; font-size: 38px; line-height: 1.2; margin-bottom: 16px; }
+        .intro-title span { color: var(--blue); border-bottom: 3px solid var(--blue-pale); }
+        .badge-grid { background: var(--blue-pale); border-radius: 20px; padding: 16px; margin: 28px 0; text-align: left; font-size: 14px; color: var(--blue); font-weight: 500; }
+        .btn-main { width: 100%; background: var(--blue); color: white; border: none; padding: 16px; font-size: 16px; font-weight: 600; border-radius: 60px; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 10px rgba(44,62,102,0.25); }
+        .btn-main:hover { background: var(--blue-light); transform: translateY(-1px); }
+        .btn-main:active { transform: scale(0.97); }
+        .q-header { display: flex; justify-content: space-between; font-size: 13px; color: var(--blue); font-weight: 600; letter-spacing: 0.5px; margin-bottom: 12px; }
+        .question-text { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; line-height: 1.4; margin-bottom: 28px; }
+        .option-btn { background: white; border: 1.5px solid var(--border); border-radius: 18px; padding: 14px 18px; margin-bottom: 12px; cursor: pointer; transition: 0.2s; display: flex; align-items: flex-start; gap: 12px; font-size: 15px; line-height: 1.4; }
+        .option-prefix { font-weight: 700; background: #f0f2f5; width: 28px; height: 28px; border-radius: 30px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--ink-muted); }
+        .option-btn.selected { border-color: var(--blue); background: var(--blue-pale); }
+        .option-btn.selected .option-prefix { background: var(--blue); color: white; }
+        .option-text { flex: 1; }
+        .btn-next { margin-top: 24px; background: #ccc; box-shadow: none; opacity: 0.5; pointer-events: none; }
+        .btn-next.active { background: var(--blue); opacity: 1; pointer-events: auto; }
+        .result-card { text-align: center; }
+        .avatar { width: 130px; height: 130px; background: var(--blue-pale); border-radius: 50%; margin: 0 auto 18px; display: flex; align-items: center; justify-content: center; font-size: 64px; overflow: hidden; border: 4px solid white; box-shadow: 0 12px 24px rgba(0,0,0,0.08); }
+        .avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .match-label { font-size: 12px; font-weight: 600; color: var(--blue); letter-spacing: 2px; margin-bottom: 8px; }
+        .player-name { font-family: 'Playfair Display', serif; font-size: 32px; margin: 4px 0 12px; }
+        .trait-pills { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 20px 0; }
+        .pill { background: var(--blue-pale); padding: 5px 14px; border-radius: 40px; font-size: 12px; font-weight: 500; color: var(--blue); }
+        .desc-text { text-align: justify; line-height: 1.7; color: var(--ink-muted); font-size: 15px; margin-top: 8px; }
+        .footer-note { text-align: center; font-size: 11px; margin-top: 40px; color: #bbb; }
+    </style>
+</head>
+<body>
+
+<header><div class="logo">SciMatch</div></header>
+
+<main>
+    <div id="intro-screen" class="screen active">
+        <div class="intro-hero">
+            <h1 class="intro-title">Which <span>scientific mind</span> mirrors yours?</h1>
+            <p style="color:var(--ink-muted); margin-bottom: 12px;">🎓 25 questions · 15 iconic scientists</p>
+            <div class="badge-grid">
+                🧠 Based on thinking style, curiosity, and problem-solving approach<br>
+                ⚡ Answer A–E (E = none of the above)<br>
+                🔬 Discover your inner genius
+            </div>
+            <button class="btn-main" id="startBtn">Start the test →</button>
+        </div>
+    </div>
+
+    <div id="quiz-screen" class="screen">
+        <div class="progress-container"><div class="progress-bar" id="quiz-progress"></div></div>
+        <div class="card">
+            <div class="q-header"><span id="q-counter">Question 1 / 25</span><span>⚡ Choose closest to you</span></div>
+            <div class="question-text" id="question-text"></div>
+            <div id="options-container"></div>
+            <button class="btn-main btn-next" id="nextBtn">Confirm → Next</button>
+        </div>
+    </div>
+
+    <div id="result-screen" class="screen">
+        <div class="card result-card">
+            <div class="avatar" id="player-avatar">🧪</div>
+            <div class="match-label">✦ YOUR SCIENTIFIC KINDRED ✦</div>
+            <h2 class="player-name" id="result-name"></h2>
+            <div class="match-percent" id="match-percent" style="font-size: 20px; font-weight: 700; color: var(--blue); margin: 8px 0;"></div>
+            <div class="trait-pills" id="result-traits"></div>
+            <p class="desc-text" id="result-desc"></p>
+            <div style="display: flex; gap: 12px; margin-top: 28px;">
+                <button class="btn-main" id="shareBtn" style="background: #3a6b4a; flex: 1;">📤 Share result</button>
+                <button class="btn-main" id="restartBtn" style="background: #4a4a6a; flex: 1;">Restart</button>
+            </div>
+        </div>
+    </div>
+    <div class="footer-note">SciMatch · based on cognitive traits</div>
+</main>
+
+<script>
+    const QUESTIONS = [
+        { text: "When facing an unfamiliar problem, I tend to:", options: [
+            { text: "Break it down into smaller parts and solve systematically", tags: { analytical: 2, methodical: 2 } },
+            { text: "Think about the big picture and try to visualize a solution", tags: { intuitive: 2, abstract: 1 } },
+            { text: "Look for patterns or analogies to known problems", tags: { pattern: 2, logical: 1 } },
+            { text: "Experiment immediately to see what happens", tags: { experimental: 2, bold: 1 } },
+            { text: "None of the above", tags: { neutral: 1 } }
+        ]},
+        { text: "My ideal work environment is:", options: [
+            { text: "A quiet library with deep focus", tags: { solitary: 2, methodical: 1 } },
+            { text: "A collaborative lab with constant discussion", tags: { social: 2, collaborative: 1 } },
+            { text: "A messy desk full of sketches and notes", tags: { creative: 2, intuitive: 1 } },
+            { text: "A structured office with clear goals", tags: { structured: 2, practical: 1 } },
+            { text: "None of the above", tags: { neutral: 1 } }
+        ]},
+        { text: "I am more driven by:", options: [
+            { text: "Curiosity about how things fundamentally work", tags: { theoretical: 2, abstract: 1 } },
+            { text: "The desire to solve practical problems", tags: { applied: 2, practical: 1 } },
+            { text: "The beauty of mathematical elegance", tags: { mathematical: 2, abstract: 1 } },
+            { text: "The thrill of discovering something new", tags: { exploratory: 2, bold: 1 } },
+            { text: "None of the above", tags: { neutral: 1 } }
+        ]},
+        { text: "When I read a scientific paper, I focus mainly on:", options: [
+            { text: "The results and figures", tags: { empirical: 2, experimental: 1 } },
+            { text: "The theoretical framework and equations", tags: { theoretical: 2, mathematical: 1 } },
+            { text: "The discussion and implications", tags: { big_picture: 2, intuitive: 1 } },
+            { text: "The methods and reproducibility", tags: { methodical: 2, rigorous: 1 } },
+            { text: "None of the above", tags: { neutral: 1 } }
+        ]},
+        { text: "I believe that scientific progress is mostly driven by:", options: [
+            { text: "Individual genius and sudden insights", tags: { intuition: 2, individual: 1 } },
+            { text: "Incremental collective effort", tags: { collaborative: 2, methodical: 1 } },
+            { text: "Technological advances and new instruments", tags: { experimental: 2, applied: 1 } },
+            { text: "Mathematical formalization", tags: { mathematical: 2, abstract: 1 } },
+            { text: "None of the above", tags: { neutral: 1 } }
+        ]},
+        { text: "I prefer theories that are:", options: [
+            { text: "Simple and elegant", tags: { aesthetic: 2, mathematical: 1 } },
+            { text: "Empirically accurate even if complex", tags: { empirical: 2, rigorous: 1 } },
+            { text: "Radical and counterintuitive", tags: { revolutionary: 2, bold: 1 } },
+            { text: "Pragmatic and useful", tags: { applied: 2, practical: 1 } },
+            { text: "None of the above", tags: { neutral: 1 } }
+        ]},
+        { text: "I am most comfortable with:", options: [
+            { text: "Abstract mathematics and logic", tags: { mathematical: 3, logical: 1 } },
+            { text: "Hands-on experiments and tinkering", tags: { experimental: 3, bold: 1 } },
+            { text: "Conceptual models and thought experiments", tags: { theoretical: 2, intuitive: 2 } },
+            { text: "Data analysis and statistics", tags: { analytical: 2, methodical: 1 } },
+            { text: "None of the above", tags: { neutral: 1 } }
+        ]},
+        { text: "When I encounter a beautiful equation, I feel:", options: [
+            { text: "A deep sense of truth", tags: { mathematical: 2, aesthetic: 2 } },
+            { text: "Skeptical about its physical meaning", tags: { empirical: 2, critical: 1 } },
+            { text: "Excited to test it", tags: { experimental: 2, bold: 1 } },
+            { text: "Indifferent if it works", tags: { practical: 2, neutral: 1 } },
+            { text: "None of the above", tags: { neutral: 1 } }
+        ]},
+        { text: "My approach to a new hypothesis is:", options: [
+            { text: "Try to prove it wrong", tags: { critical: 2, rigorous: 1 } },
+            { text: "Look for confirming evidence", tags: { intuitive: 2, optimistic: 1 } },
+            { text: "Derive its consequences mathematically", tags: { mathematical: 2, logical: 1 } },
+            { text: "Design an experiment", tags: { experimental: 2, methodical: 1 } },
+            { text: "None of the above", tags: { neutral: 1 } }
+        ]},
+        { text: "I find inspiration from:", options: [
+            { text: "Nature and observation", tags: { empirical: 2, naturalist: 1 } },
+            { text: "Pure reasoning and axioms", tags: { logical: 2, mathematical: 1 } },
+            { text: "Paradoxes and inconsistencies", tags: { critical: 2, revolutionary: 1 } },
+            { text: "Practical inventions", tags: { applied: 2, engineering: 1 } },
+            { text: "None of the above", tags: { neutral: 1 } }
+        ]},
+        { text: "In a debate, I rely mostly on:", options: [
+            { text: "Logical arguments and evidence", tags: { logical: 2, rigorous: 1 } },
+            { text: "Intuition and big picture", tags: { intuitive: 2, big_picture: 1 } },
+            { text: "Mathematical proofs", tags: { mathematical: 2, abstract: 1 } },
+            { text: "Practical examples", tags: { applied: 2, pragmatic: 1 } },
+            { text: "None of the above", tags: { neutral: 1 } }
+        ]},
+        { text: "I am more interested in:", options: [
+            { text: "Fundamental laws of the universe", tags: { theoretical: 3, abstract: 1 } },
+            { text: "How things work in practice", tags: { applied: 3, engineering: 1 } },
+            { text: "The limits of knowledge", tags: { philosophical: 2, critical: 2 } },
+            { text: "Patterns and structures", tags: { mathematical: 2, pattern: 1 } },
+            { text: "None of the above", tags: { neutral: 1 } }
+        ]},
+        { text: "I tend to think in:", options: [
+            { text: "Words and concepts", tags: { verbal: 2, intuitive: 1 } },
+            { text: "Images and spatial relations", tags: { visual: 2, abstract: 1 } },
+            { text: "Equations and formulas", tags: { mathematical: 3, logical: 1 } },
+            { text: "Hands-on actions", tags: { kinesthetic: 2, experimental: 1 } },
+            { text: "None of the above", tags: { neutral: 1 } }
+        ]},
+        { text: "My greatest strength as a scientist would be:", options: [
+            { text: "Creativity and imagination", tags: { creative: 2, intuitive: 1 } },
+            { text: "Rigor and precision", tags: { rigorous: 2, methodical: 1 } },
+            { text: "Breadth of knowledge", tags: { polymath: 2, big_picture: 1 } },
+            { text: "Experimental skill", tags: { experimental: 2, hands_on: 1 } },
+            { text: "None of the above", tags: { neutral: 1 } }
+        ]},
+        { text: "I enjoy reading about:", options: [
+            { text: "Philosophy of science", tags: { philosophical: 2, reflective: 1 } },
+            { text: "Biographies of inventors", tags: { applied: 1, historical: 1 } },
+            { text: "Recent discoveries", tags: { current: 2, exploratory: 1 } },
+            { text: "Classic papers", tags: { historical: 2, theoretical: 1 } },
+            { text: "None of the above", tags: { neutral: 1 } }
+        ]},
+        { text: "I am more likely to say:", options: [
+            { text: "Trust, but verify", tags: { critical: 2, empirical: 1 } },
+            { text: "What if...?", tags: { imaginative: 2, bold: 1 } },
+            { text: "Let me derive it", tags: { mathematical: 2, logical: 1 } },
+            { text: "Show me the data", tags: { empirical: 2, skeptical: 1 } },
+            { text: "None of the above", tags: { neutral: 1 } }
+        ]},
+        { text: "I prefer collaborative work because:", options: [
+            { text: "It challenges my ideas", tags: { collaborative: 2, critical: 1 } },
+            { text: "It speeds up experimentation", tags: { applied: 2, practical: 1 } },
+            { text: "It generates more creative solutions", tags: { creative: 2, social: 1 } },
+            { text: "I dislike working alone", tags: { social: 2, neutral: 1 } },
+            { text: "None of the above", tags: { neutral: 1 } }
+        ]},
+        { text: "I would rather discover:", options: [
+            { text: "A new fundamental particle", tags: { theoretical: 2, fundamental: 2 } },
+            { text: "A cure for a disease", tags: { applied: 3, humanitarian: 1 } },
+            { text: "A new mathematical theorem", tags: { mathematical: 3, abstract: 1 } },
+            { text: "A better energy source", tags: { applied: 2, engineering: 2 } },
+            { text: "None of the above", tags: { neutral: 1 } }
+        ]},
+        { text: "When a theory is elegant but contradicts experiment, I:", options: [
+            { text: "Trust experiment", tags: { empirical: 3, critical: 1 } },
+            { text: "Question the experiment", tags: { theoretical: 2, bold: 1 } },
+            { text: "Try to modify the theory", tags: { flexible: 2, creative: 1 } },
+            { text: "Look for hidden assumptions", tags: { analytical: 2, rigorous: 1 } },
+            { text: "None of the above", tags: { neutral: 1 } }
+        ]},
+        { text: "I am most fascinated by:", options: [
+            { text: "Quantum mechanics", tags: { quantum: 2, counterintuitive: 2 } },
+            { text: "Evolution and biology", tags: { biological: 2, complex: 1 } },
+            { text: "Cosmology", tags: { cosmological: 2, big_picture: 2 } },
+            { text: "Computation and algorithms", tags: { computational: 2, logical: 2 } },
+            { text: "None of the above", tags: { neutral: 1 } }
+        ]},
+        { text: "My learning style is:", options: [
+            { text: "Reading and reflection", tags: { solitary: 2, theoretical: 1 } },
+            { text: "Doing and experimenting", tags: { experiential: 2, hands_on: 2 } },
+            { text: "Discussing and debating", tags: { social: 2, collaborative: 1 } },
+            { text: "Teaching others", tags: { teaching: 1, social: 1 } },
+            { text: "None of the above", tags: { neutral: 1 } }
+        ]},
+        { text: "I think the most important scientific value is:", options: [
+            { text: "Objectivity", tags: { rigorous: 2, empirical: 1 } },
+            { text: "Creativity", tags: { creative: 2, bold: 1 } },
+            { text: "Skepticism", tags: { critical: 2, logical: 1 } },
+            { text: "Utility", tags: { applied: 2, pragmatic: 1 } },
+            { text: "None of the above", tags: { neutral: 1 } }
+        ]},
+        { text: "I would describe myself as:", options: [
+            { text: "A systematic thinker", tags: { methodical: 2, analytical: 1 } },
+            { text: "A visionary", tags: { visionary: 2, intuitive: 1 } },
+            { text: "A tinkerer", tags: { experimental: 2, hands_on: 1 } },
+            { text: "A logician", tags: { logical: 2, mathematical: 1 } },
+            { text: "None of the above", tags: { neutral: 1 } }
+        ]},
+        { text: "I find beauty in:", options: [
+            { text: "Symmetry and order", tags: { aesthetic: 2, mathematical: 1 } },
+            { text: "Complexity and chaos", tags: { complex: 2, exploratory: 1 } },
+            { text: "Practical solutions", tags: { applied: 2, pragmatic: 1 } },
+            { text: "Paradoxes", tags: { philosophical: 2, critical: 1 } },
+            { text: "None of the above", tags: { neutral: 1 } }
+        ]},
+        { text: "If I had unlimited resources, I would:", options: [
+            { text: "Build a giant particle accelerator", tags: { experimental: 2, fundamental: 2 } },
+            { text: "Develop AI to solve math problems", tags: { computational: 2, mathematical: 2 } },
+            { text: "Explore the universe", tags: { cosmological: 2, big_picture: 2 } },
+            { text: "Create a universal theory of everything", tags: { theoretical: 3, abstract: 1 } },
+            { text: "None of the above", tags: { neutral: 1 } }
+        ]}
+    ];
+
+    const SCIENTISTS = [
+        { name: "Isaac Newton", img: "", traits: ["Systematic", "Mathematical", "Laws of Motion"], desc: "You see the universe as a set of precise rules. Your mind thrives on order, calculus, and the beauty of fundamental laws. Like Newton, you build towering structures from first principles.", match: { analytical: 2, methodical: 2, mathematical: 3, theoretical: 2, solitary: 1, rigorous: 2 } },
+        { name: "Albert Einstein", img: "", traits: ["Thought experiments", "Imaginative", "Relativity"], desc: "You think in pictures and concepts. You question common sense and love thought experiments. Your creativity reshapes reality, just as Einstein did with space and time.", match: { intuitive: 3, abstract: 2, creative: 2, big_picture: 2, imaginative: 2, theoretical: 1 } },
+        { name: "James Clerk Maxwell", img: "", traits: ["Unifier", "Mathematical physicist", "Electromagnetism"], desc: "You see hidden connections. Like Maxwell, you unify disparate phenomena with elegant equations. Your strength is synthesizing theory and mathematics into coherent wholes.", match: { mathematical: 3, theoretical: 2, pattern: 2, abstract: 2, logical: 1 } },
+        { name: "Niels Bohr", img: "", traits: ["Complementarity", "Quantum pioneer", "Philosophical"], desc: "You embrace paradox. Bohr-style, you accept that contradictory models can both be true. You love deep philosophical discussions and the strange quantum world.", match: { philosophical: 2, critical: 2, quantum: 2, intuitive: 1, collaborative: 1, reflective: 1 } },
+        { name: "Galileo Galilei", img: "", traits: ["Observational", "Experimental", "Rebel"], desc: "You trust your eyes and experiments. Like Galileo, you challenge authority with empirical evidence. You are bold, practical, and not afraid to go against the crowd.", match: { empirical: 3, experimental: 2, bold: 2, practical: 1, rigorous: 1 } },
+        { name: "Erwin Schrödinger", img: "", traits: ["Wave mechanics", "Interdisciplinary", "Curious"], desc: "You roam across fields. Schrödinger was a polymath who thought deeply about life and physics. You are drawn to elegant wave equations and the mystery of consciousness.", match: { mathematical: 2, theoretical: 2, abstract: 2, quantum: 2, philosophical: 1, intuitive: 1 } },
+        { name: "Werner Heisenberg", img: "", traits: ["Uncertainty principle", "Matrix mechanics", "Radical"], desc: "You accept limits. Heisenberg showed that precise measurement isn't always possible. Your thinking embraces uncertainty and revolutionary matrix methods.", match: { mathematical: 2, revolutionary: 2, quantum: 2, critical: 1, abstract: 2, bold: 1 } },
+        { name: "Paul Dirac", img: "", traits: ["Mathematical beauty", "Antimatter", "Laconic"], desc: "You are driven by mathematical elegance. Dirac's equation predicted antimatter from pure beauty. You value concise, powerful insights over lengthy discourse.", match: { mathematical: 3, aesthetic: 2, theoretical: 2, abstract: 2, solitary: 1, logical: 1 } },
+        { name: "Max Planck", img: "", traits: ["Quantum father", "Reluctant revolutionary", "Determined"], desc: "You are persistent and careful. Planck didn't seek revolution but faced it with rigor. Your mindset: precise, hardworking, and willing to accept radical ideas when evidence demands.", match: { empirical: 2, rigorous: 2, theoretical: 1, methodical: 2, critical: 1, quantum: 2 } },
+        { name: "Richard Feynman", img: "", traits: ["Curious", "Charismatic", "Intuitive physicist"], desc: "You love solving puzzles with playful creativity. Feynman diagrams and path integrals show your joy in understanding. You explain complex ideas simply and hate pretension.", match: { intuitive: 2, creative: 2, experimental: 1, communicative: 2, bold: 1, applied: 1 } },
+        { name: "Alan Turing", img: "", traits: ["Logical", "Computational", "Codebreaker"], desc: "You think algorithmically. Turing laid the foundation for computer science. You are fascinated by logic, computation, and the limits of machines. A cryptographer at heart.", match: { mathematical: 2, logical: 3, computational: 3, analytical: 2, solitary: 1, pattern: 1 } },
+        { name: "John von Neumann", img: "", traits: ["Polymath", "Game theory", "Computer architecture"], desc: "You are a universal genius. Von Neumann contributed to math, physics, economics, and computing. You see connections everywhere and can master any domain.", match: { mathematical: 3, logical: 2, applied: 2, computational: 2, strategic: 2, polymath: 2 } },
+        { name: "Claude Shannon", img: "", traits: ["Information theory", "Inventive", "Playful"], desc: "You are an inventor and a theorist. Shannon founded information theory and built juggling robots. You love mixing deep theory with playful tinkering.", match: { mathematical: 2, engineering: 2, creative: 2, practical: 2, pattern: 2, inventive: 2 } }
+    ];
+
+    let currentIdx = 0;
+    let userScores = {
+        analytical:0, methodical:0, intuitive:0, abstract:0, pattern:0, logical:0, experimental:0, bold:0, solitary:0, social:0, creative:0, structured:0, theoretical:0, applied:0, mathematical:0, empirical:0, big_picture:0, collaborative:0, rigorous:0, aesthetic:0, revolutionary:0, critical:0, philosophical:0, quantum:0, computational:0, engineering:0, hands_on:0, neutral:0
+    };
+    let selectedOptionIndex = null;
+
+    const introScreen = document.getElementById('intro-screen');
+    const quizScreen = document.getElementById('quiz-screen');
+    const resultScreen = document.getElementById('result-screen');
+    const startBtn = document.getElementById('startBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const questionTextEl = document.getElementById('question-text');
+    const optionsContainer = document.getElementById('options-container');
+    const qCounter = document.getElementById('q-counter');
+    const progressBar = document.getElementById('quiz-progress');
+
+    function startQuiz() {
+        for (let key in userScores) userScores[key] = 0;
+        currentIdx = 0;
+        selectedOptionIndex = null;
+        introScreen.classList.remove('active');
+        quizScreen.classList.add('active');
+        renderQuestion();
+    }
+
+    function renderQuestion() {
+        const q = QUESTIONS[currentIdx];
+        questionTextEl.textContent = q.text;
+        optionsContainer.innerHTML = '';
+        const letters = ['A', 'B', 'C', 'D', 'E'];
+        q.options.forEach((opt, idx) => {
+            const btn = document.createElement('div');
+            btn.className = 'option-btn';
+            const prefixSpan = document.createElement('span');
+            prefixSpan.className = 'option-prefix';
+            prefixSpan.textContent = letters[idx];
+            const textSpan = document.createElement('span');
+            textSpan.className = 'option-text';
+            textSpan.textContent = opt.text;
+            btn.appendChild(prefixSpan);
+            btn.appendChild(textSpan);
+            btn.addEventListener('click', () => selectOption(idx));
+            optionsContainer.appendChild(btn);
+        });
+        selectedOptionIndex = null;
+        nextBtn.classList.remove('active');
+        nextBtn.textContent = currentIdx === QUESTIONS.length-1 ? 'See result' : 'Confirm → Next';
+        updateProgress();
+    }
+
+    function selectOption(idx) {
+        selectedOptionIndex = idx;
+        const allOptions = document.querySelectorAll('#options-container .option-btn');
+        allOptions.forEach((btn, i) => {
+            if (i === idx) btn.classList.add('selected');
+            else btn.classList.remove('selected');
+        });
+        nextBtn.classList.add('active');
+    }
+
+    function updateProgress() {
+        const percent = (currentIdx / QUESTIONS.length) * 100;
+        progressBar.style.width = `${percent}%`;
+        qCounter.textContent = `Question ${currentIdx+1} / ${QUESTIONS.length}`;
+    }
+
+    function saveAndNext() {
+        if (selectedOptionIndex === null) return;
+        const selectedTags = QUESTIONS[currentIdx].options[selectedOptionIndex].tags;
+        if (selectedTags) {
+            Object.keys(selectedTags).forEach(key => {
+                if (userScores[key] !== undefined) userScores[key] += selectedTags[key];
+                else userScores[key] = selectedTags[key];
+            });
+        }
+        if (currentIdx + 1 < QUESTIONS.length) {
+            currentIdx++;
+            selectedOptionIndex = null;
+            renderQuestion();
+        } else {
+            showResult();
+        }
+    }
+
+    function cosineSimilarity(userVec, scientistVec) {
+        const allTraits = new Set([...Object.keys(userVec), ...Object.keys(scientistVec)]);
+        let dot = 0, normU = 0, normP = 0;
+        for (let t of allTraits) {
+            if (t === 'neutral') continue;
+            let u = userVec[t] || 0;
+            let p = scientistVec[t] || 0;
+            dot += u * p;
+            normU += u * u;
+            normP += p * p;
+        }
+        if (normU === 0 || normP === 0) return 0;
+        return dot / (Math.sqrt(normU) * Math.sqrt(normP));
+    }
+
+    function showResult() {
+        let bestMatch = SCIENTISTS[0];
+        let bestSim = -1;
+        for (let scientist of SCIENTISTS) {
+            let sim = cosineSimilarity(userScores, scientist.match);
+            if (sim > bestSim) {
+                bestSim = sim;
+                bestMatch = scientist;
+            }
+        }
+        let percent = Math.floor(bestSim * 100);
+        if (percent > 99) percent = 99;
+        if (percent < 0) percent = 0;
+        document.getElementById('match-percent').innerText = `🔥 Match: ${percent}%`;
+        document.getElementById('result-name').innerText = bestMatch.name;
+        document.getElementById('result-desc').innerText = bestMatch.desc;
+        const traitsContainer = document.getElementById('result-traits');
+        traitsContainer.innerHTML = bestMatch.traits.map(t => `<span class="pill">${t}</span>`).join('');
+        const avatarDiv = document.getElementById('player-avatar');
+        avatarDiv.innerHTML = '';
+        const emojiMap = {
+            "Isaac Newton": "🍎", "Albert Einstein": "🧠", "James Clerk Maxwell": "⚡", "Niels Bohr": "☢️", "Galileo Galilei": "🔭",
+            "Erwin Schrödinger": "🐱", "Werner Heisenberg": "❓", "Paul Dirac": "✍️", "Max Planck": "🌡️", "Richard Feynman": "🥁",
+            "Alan Turing": "💻", "John von Neumann": "🎲", "Claude Shannon": "🤖"
+        };
+        avatarDiv.innerHTML = emojiMap[bestMatch.name] || "🔬";
+        avatarDiv.style.fontSize = "64px";
+        quizScreen.classList.remove('active');
+        resultScreen.classList.add('active');
+    }
+
+    function restartTest() {
+        resultScreen.classList.remove('active');
+        introScreen.classList.add('active');
+    }
+
+    function shareResult() {
+        const name = document.getElementById('result-name').innerText;
+        const percent = document.getElementById('match-percent').innerText;
+        const traits = Array.from(document.querySelectorAll('#result-traits .pill')).map(p => p.innerText).join(', ');
+        const text = `🧪 My SciMatch result: ${name} ${percent}\n✨ Traits: ${traits}\n🔗 ${window.location.href}`;
+        navigator.clipboard.writeText(text).then(() => alert('Result copied! Share with friends.')).catch(() => alert('Could not copy.'));
+    }
+
+    startBtn.addEventListener('click', startQuiz);
+    nextBtn.addEventListener('click', saveAndNext);
+    restartBtn.addEventListener('click', restartTest);
+    const shareBtn = document.getElementById('shareBtn');
+    if (shareBtn) shareBtn.addEventListener('click', shareResult);
+</script>
+</body>
+</html>
